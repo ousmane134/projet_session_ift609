@@ -7,13 +7,13 @@
 
 (chunk-type Mult         firstM  secondM resMU resMD)
 (chunk-type Div          firstD  secondD resD)
-(chunk-type Soustraction firstS  secondS  resSU resSD )
+(chunk-type Soustraction firstS  secondS  resSU resSD ) ;;
 (chunk-type Add          firstA  secondA  resAU resAD )
 (chunk-type Racine       nbre  resRU resRU)
- 
 
 
-(chunk-type Equat A B C X1 X2 delta state)
+
+(chunk-type Equat A B C X1 X2 delta state retenuU retenuD)
 (chunk-type delta b-carreU b-carreD 4-acU 4-acD 4-acC retenuU retenuD)
 
 
@@ -168,35 +168,35 @@
 (goal-focus first-goal)
 
 
-(p start_A_NN
+
+
+;; cas A et B nuls
+(p start_A_B_N
    =goal>
       ISA         Equat
 	  A           =a
 	  B           =b
 	  C           =c
-	 -A           0 ;;CAS A est different de zero. On a soit deux solutions ou zero solution
+	  A           0
+	  B		  	  0 
 	  state       nil
  ==>
-   =goal>
-		state     b-carre
-   +retrieval>
-      ISA         Mult
-      firstM       b
-	  secondM      b
+   =-goal>
+   !output!       ( 'Pas de solution dans R' )
+			
 )
 
 
-)
+;;cas A nul et B non nul
 
-
-;;CAS A est égal de zero. On a soit deux solutions ou zero solution
-(p start_A_N
+(p start_A_N_B_NN
    =goal>
       ISA         Equat
 	  A           =a
 	  B           =b
 	  C           =c
-	  A           0 
+	  A           0
+	 -B		  	  0 
 	  state       nil
  ==>
    =goal>
@@ -206,9 +206,10 @@
 		ISA Div
 		firstD =c
 		secondD =b		  
-)
+) ;;on doit revoir les slots de ce chunk-type. Pensez au cas ou A est non null et qu'on devra faire (-b-square(delta))/2*a, les nombres pourront avoir des dizaines.
 
-(p Sol-A-NUL
+
+(p Sol-A-NUL-B-NON_NUL
 
 	=goal>
 		ISA Equat
@@ -224,7 +225,29 @@
 )
 
 
-(P b-carre 
+
+
+
+;;cas A non nul. Cas general
+(p start_A_NN
+   =goal>
+      ISA         Equat
+	  A           =a
+	  B           =b
+	  C           =c
+	 -A           0 
+	  state       nil
+ ==>
+   =goal>
+		state     b-carre
+   +retrieval>
+      ISA         Mult
+      firstM       b
+	  secondM      b
+)
+
+
+(p b-carre 
 	=goal>
 		ISA   Equat
 		state b-carre
@@ -249,7 +272,7 @@
 	+retrieval>
       ISA         Mult
       firstM       a
-	  secondM     c 
+	  secondM      c 
 	    
 )
 
@@ -273,17 +296,20 @@
 ==>
 	=goal>
 		state   4ac-U
+		;;state retenue
     +imaginal>
 	    ISA delta
 	    4-acU   =acU
 		4-acD   =acD
 	+retrieval>
+		;;ISA retenue4
+		;;nombre =acU
 	    ISA      Mult
 		firstM    =4
 		secondM   =acU
 	    
 )
-
+;;(chunk-type retenue4 nombre ret)
 
 
 (P 4ac-U
@@ -293,12 +319,13 @@
 		A        =a
 	    B        =b
 	    C        =c
+		
 	=retrieval>
 	    ISA      Mult
 		firstM    =4
 		secondM   =acU
 		resMU     =4acU
-		;;resMD     =ret
+		;;resMD     =ret 
 	?imaginal>
 	    state free
 
@@ -306,10 +333,11 @@
 	=goal>
 	    ISA     Equat
 		state   4ac-D
+		retU 	=ret
 	+imaginal>
 	    ISA    delta
 		4ac-U  =4acU
-		;;retenu =ret
+		;;retenuU =ret
     +retrieval>
 	    ISA      Mult
 		firstM    4
@@ -347,45 +375,6 @@
 
 
 
-(p delta
-
-	=goal>
-	
-
-
-
-
-
-
-
-
-
-
-
-
-
-	)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
@@ -416,20 +405,10 @@
 		nbreBU =b1
 		nbreBD =b2
 		nbreBC =b3
-		res_sousU =c1
-		res_sousD =c2
-		res_sousC =c3
 				
 	=goal>
 		ISA Equat
 		state racine-delta 
-		
-	=+imaginal>
-		ISA soustraction
-		res_sousU =c1
-		res_sousD =c2
-		res_sousC =c3
-		
 )
 
 
@@ -442,8 +421,14 @@
 		B =b 
 		C =c
 		
-	=imaginal>
+	=retrieval>
 		ISA soustraction
+		nbreAU =a1
+		nbreAD =a2
+		nbreAC 0
+		nbreBU =b1
+		nbreBD =b2
+		nbreBC =b3
 		res_sousU =c1
 		res_sousD =c2
 		res_sousC =c3 
@@ -452,19 +437,13 @@
 	=goal>
 		ISA Equat
 		state diff-b-delta-square
+		;;state_solution choix
+
 	+retrieval>
 		ISA Racine
 		nbreU =c1
 		nbreD =c2 
-		nbreC =c3
-		resSU =d1
-		resSD =d2
-		
-	+imaginal>
-		ISA Racine
-		resSU =d1
-		resSD =d2
-		
+		nbreC =c3		
 )
 ;;(chunk-type soustraction nbreAU nbreAD nbreAC nbreBU nbreBD nbreBC res_sousU res_sousD res_sousC)
 (p diff-b-delta-square
@@ -474,15 +453,37 @@
 		A =a
 		B =b 
 		C =c
-	=imaginal>
+	=retrieval>
 		ISA Racine
+	    nbreU =c1
+		nbreD =c2 
+		nbreC =c3
 		resSU =d1
 		resSD =d2
 ==>
 	=goal>
 		ISA Equat
-		state 2-a
+		state div-a
 	=+retrieval>
+		ISA soustraction
+		nbreAU =b
+		nbreAD 0
+		nbreAC 0
+		nbreBU =d1
+		nbreBD =d2
+		nbreBC 0
+
+)
+
+
+;;(chunk-type Mult first second resU resD)
+(p a
+	=goal>
+		ISA Equat
+		A =a
+		B =b 
+		C =c
+	=retrieval>
 		ISA soustraction
 		nbreAU =b
 		nbreAD 0
@@ -493,35 +494,102 @@
 		res_sousU =r1
 		res_sousD =r2
 		res_sousC =r3
-	=+imaginal>
-		ISA soustraction
-		res_sousU =r1
-		res_sousD =r2
-		res_sousC =r3
+		
+==>
+	=+retrieval>
+		ISA div
+		nu =r1
+		nd =r2
+		nc =r3
+		d  =a
+	=goal>
+		ISA Equat
+		state div-2 
+ 
+			    
 )
 
-
-;;(chunk-type Mult first second resU resD)
-(p 2-a
+(p div-2
 	=goal>
 		ISA Equat
 		A =a
 		B =b 
 		C =c
+	=retrieval>
+		ISA div
+		nu =r1
+		nd =r2
+		nc =r3
+		d  =a
+		resu =res1
+		resd =res2
+		resc =res3
+		
 ==>
-	=+retrieval>
-		ISA mult
-		first 2
-		second =a
-		resU =r1
-		resD =r2
+	+retrieval>
+		ISA div
+		nu =res1
+		nd =res2
+		nc =res3
+		d  2
 	=goal>
 		ISA Equat
-		state quotient ;; pour aller à la production qi va calculer (-b-racine(delta)/2*a
- 
-			    
+		state sol-1 
 )
 
+(p sol-1
+	=goal>
+		ISA Equat
+		A =a
+		B =b 
+		C =c
+	=retrieval>
+		ISA div
+		nu =res1
+		nd =res2
+		nc =res3
+		d  2
+		resu =res1
+		resd =res2
+		resc =res3
+==>
+	=goal>
+		ISA Equat
+		state nil
+	!output!       ( - =res3 =res2 =res1 )
+		
+)		
+		
+
+;;brouillon		
+(p somme-b-delta-square
+	=goal>
+		ISA Euqat
+		state somme-b-delta-square
+		A =a
+		B =b 
+		C =c
+	=retrieval>
+		ISA Racine
+	    nbreU =c1
+		nbreD =c2 
+		nbreC =c3
+		resSU =d1
+		resSD =d2
+==>
+	=goal>
+		ISA Equat
+		state div-a
+	=+retrieval>
+		ISA Add
+		nbreAU =b
+		nbreAD 0
+		nbreAC 0
+		nbreBU =d1
+		nbreBD =d2
+		nbreBC 0
+
+)
 
 
 
